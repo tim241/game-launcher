@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-config_file="${XDG_CONFIG_HOME:-$HOME/.config}/rofi-games"
+config_file="${XDG_CONFIG_HOME:-$HOME/.config}/game-launcher/launcher.conf"
+
 gog_games_path="$HOME/GOG Games/"
 
 # game array format:
