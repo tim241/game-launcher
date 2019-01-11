@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+
+config_file="${XDG_CONFIG_HOME:-$HOME/.config}/rofi-games"
+gog_games_path="$HOME/GOG Games/"
+
+# game array format:
+# Type|Game Name|Type Flags
+# Types:
+# exec = executable
+# 
+games=()
+
+# sorted game list
+sorted_games=()
+
+function source_config()
+{
+    if [ -f "$config_file" ]
+    then
+        source "$config_file"
+    fi
+}
+
+function get_games()
+{
+    get_gog_games
+}
+
+function get_gog_games()
+{
+    local found=no
+
+    cd "$gog_games_path"
+    # get games
+    for game in *
+    do
+        # found the game
+        if [ -f "$game/start.sh" ]
+        then
+            games+=("exec|$game|$PWD/$game/start.sh")
+            found=yes
+        fi
+    done
+
+    if [ "$found" = "no" ]
+    then
+        return 1
+    fi
+}
+
+function sort_games()
+{
+    IFS=$'\n' sorted_games=($(sort <<<"${games[*]}"))
+    unset IFS
+}
+
+function show_menu()
+{
+    local game_names game_length
+
+    game_length="${#sorted_games[@]}"
+    i=1
+    # build game_names array
+    for item in "${sorted_games[@]}"
+    do
+        # don't append newline on last game item
+        if [ "$i" = "$game_length" ]
+        then
+            game_names+="$(echo "$item" | cut -d'|' -f2)"
+        else
+            game_names+="$(echo "$item" | cut -d'|' -f2)\n"
+        fi
+        ((i++))
+    done
+
+    if [ ! "$rofi" ]
+    then
+        rofi="rofi"
+    fi
+
+    game_id="$(echo -e "${game_names[@]}" | "$rofi" -dmenu -p game -format i -i)"
+}
+
+function launch_game_exec()
+{
+    exec "$(echo "${sorted_games[$game_id]}" | cut -d'|' -f3)"
+}
+
+function launch_game()
+{
+    game_type="$(echo "${sorted_games[$game_id]}" | cut -d'|' -f1)"
+
+    case "$game_type" in
+        "exec") launch_game_exec;;
+    esac
+}
+
+source_config
+
+if ! get_games
+then
+    echo "Failed to get GOG games"
+    exit 1
+fi
+
+sort_games
+
+show_menu
+
+if [ ! "$game_id" ]
+then
+    echo "Failed to get game id"
+    exit 1
+fi
+
+launch_game
