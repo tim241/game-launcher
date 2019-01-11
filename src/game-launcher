@@ -30,6 +30,11 @@ function get_gog_games()
 {
     local found=no
 
+    if [ ! -d "$gog_games_path" ]
+    then
+        return
+    fi
+
     cd "$gog_games_path"
     # get games
     for game in *
@@ -99,7 +104,7 @@ source_config
 
 if ! get_games
 then
-    echo "Failed to get GOG games"
+    echo "Failed to get games"
     exit 1
 fi
 
