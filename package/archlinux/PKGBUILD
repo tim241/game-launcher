@@ -1,0 +1,17 @@
+_pkgname=game-launcher
+pkgname=$_pkgname-git
+
+pkgver=1
+pkgrel=1
+
+arch=('any')
+source=("git+https://gitlab.com/tim241/game-launcher.git")
+
+sha256sums=('SKIP')
+
+package()
+{
+    cd "$_pkgname"
+    install -D -m=755 src/game-launcher     "$pkgdir/usr/bin/game-launcher"
+    install -D -m=755 src/game-launcher-add "$pkgdir/usr/bin/game-launcher-add"
+}
