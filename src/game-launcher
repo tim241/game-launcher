@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 
-config_file="${XDG_CONFIG_HOME:-$HOME/.config}/game-launcher/launcher.conf"
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/game-launcher"
+config_file="$config_dir/launcher.conf"
+
+custom_games_file="$config_dir/custom-games.conf"
 
 # default settings
 gog_games_path="$HOME/GOG Games/"
 steamapps_path="$HOME/.local/share/Steam/steamapps"
 
 # game array format:
-# Type|Game Name|Type Flags
+# Type|Game Name|Type Flags|Arguments
 # Types:
 # exec  = executable
 # steam = steamid
@@ -28,6 +31,12 @@ function get_games()
 {
     get_gog_games
     get_steam_games
+    get_custom_games
+
+    if [ ! "${games[0]}" ]
+    then
+        return 1
+    fi
 }
 
 function get_gog_games()
@@ -87,6 +96,34 @@ function get_steam_games()
     done
 }
 
+function get_custom_games()
+{
+    local game_name game_exec game_args
+
+    if [ ! -f "$custom_games_file" ]
+    then
+        return
+    fi
+
+    while IFS='' read -r line
+    do
+        if [[ "$line" = "#"* ]]
+        then
+            continue
+        fi
+
+        game_name="$(echo "$line" | cut -d'|' -f1)"
+        game_exec="$(echo "$line" | cut -d'|' -f2)"
+        game_args="$(echo "$line" | cut -d'|' -f3)"
+
+        if [  "$game_name" ] && \
+            [  "$game_exec" ]
+        then
+            games+=("exec|$game_name|$game_exec|$game_args")
+        fi
+    done < "$custom_games_file"
+}
+
 function sort_games()
 {
     IFS=$'\n' sorted_games=($(sort <<<"${games[*]}"))
@@ -122,7 +159,9 @@ function show_menu()
 
 function launch_game_exec()
 {
-    exec "$(echo "${sorted_games[$game_id]}" | cut -d'|' -f3)"
+    file="$(echo "${sorted_games[$game_id]}" | cut -d'|' -f3)"
+    args="$(echo "${sorted_games[$game_id]}" | cut -d'|' -f4)"
+    exec "$file" $args
 }
 
 function launch_game_steam()
