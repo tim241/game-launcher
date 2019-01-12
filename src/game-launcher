@@ -46,14 +46,18 @@ function get_gog_games()
         return
     fi
 
+    local game_name
+
     cd "$gog_games_path"
     # get games
     for game in *
     do
         # found the game
-        if [ -f "$game/start.sh" ]
+        if [ -f "$game/start.sh" ] && \
+            [ -f "$game/gameinfo" ]
         then
-            games+=("exec|$game|$PWD/$game/start.sh")
+            game_name="$(head -1 "$game/gameinfo")"
+            games+=("exec|$game_name|$PWD/$game/start.sh")
         fi
     done
 
