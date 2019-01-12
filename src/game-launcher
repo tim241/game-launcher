@@ -2,13 +2,15 @@
 
 config_file="${XDG_CONFIG_HOME:-$HOME/.config}/game-launcher/launcher.conf"
 
+# default settings
 gog_games_path="$HOME/GOG Games/"
+steamapps_path="$HOME/.local/share/Steam/steamapps"
 
 # game array format:
 # Type|Game Name|Type Flags
 # Types:
-# exec = executable
-# 
+# exec  = executable
+# steam = steamid
 games=()
 
 # sorted game list
@@ -25,12 +27,11 @@ function source_config()
 function get_games()
 {
     get_gog_games
+    get_steam_games
 }
 
 function get_gog_games()
 {
-    local found=no
-
     if [ ! -d "$gog_games_path" ]
     then
         return
@@ -44,14 +45,46 @@ function get_gog_games()
         if [ -f "$game/start.sh" ]
         then
             games+=("exec|$game|$PWD/$game/start.sh")
-            found=yes
         fi
     done
 
-    if [ "$found" = "no" ]
+}
+
+# returns item
+function steam_appmanifest_get()
+{
+    file="$1"
+    item="$2"
+
+    grep "$item" "$file" \
+        | sed -e 's/^[ \t]*//' \
+        | cut -d'"' -f4 
+}
+
+function get_steam_games()
+{
+    local game_name game_appid
+
+    if [ ! -d "$steamapps_path" ]
     then
-        return 1
+        return
     fi
+
+    # get all appmanifest files
+    for appmanifest in "$steamapps_path"/appmanifest_*
+    do
+        game_name="$(steam_appmanifest_get "$appmanifest" "\"name\"")"
+        game_appid="$(steam_appmanifest_get "$appmanifest" "\"appid\"")"
+
+        if [ ! "$game_name" ] || \
+            [ ! "$game_appid" ]
+        then
+            continue
+        fi
+
+        # add game to list
+        games+=("steam|$game_name|$game_appid")
+    done
 }
 
 function sort_games()
@@ -92,12 +125,19 @@ function launch_game_exec()
     exec "$(echo "${sorted_games[$game_id]}" | cut -d'|' -f3)"
 }
 
+function launch_game_steam()
+{
+    appid="$(echo "${sorted_games[$game_id]}" | cut -d'|' -f3)"
+    exec steam -silent "steam://rungameid/$appid"
+}
+
 function launch_game()
 {
     game_type="$(echo "${sorted_games[$game_id]}" | cut -d'|' -f1)"
 
     case "$game_type" in
         "exec") launch_game_exec;;
+        "steam") launch_game_steam;;
     esac
 }
 
