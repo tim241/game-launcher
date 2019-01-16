@@ -4,10 +4,12 @@ config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/game-launcher"
 config_file="$config_dir/launcher.conf"
 
 custom_games_file="$config_dir/custom-games.conf"
+game_stats_file="$config_dir/game-stats.conf"
 
 # default settings
 gog_games_path="$HOME/GOG Games/"
 steamapps_path="$HOME/.local/share/Steam/steamapps"
+game_stats="on"
 
 # game array format:
 # Type|Game Name|Type Flags|Arguments
@@ -160,17 +162,74 @@ function show_menu()
     game_id="$(echo -e "${game_names[@]}" | "$rofi" -dmenu -p game -format i -i)"
 }
 
+function save_time()
+{
+    local game_name duration saved_duration
+
+    duration="$1"
+    game_name="$(echo "${sorted_games[$game_id]}" | cut -d'|' -f2)"
+
+    if (( "$duration" < 60 ))
+    then
+        return
+    fi
+
+    if [ ! -f "$game_stats_file" ]
+    then
+        echo "$game_name|$duration" > "$game_stats_file"
+    else
+        if [ "$(grep "$game_name" "$game_stats_file")" ]
+        then
+            saved_duration="$(grep "$game_name" "$game_stats_file" | cut -d'|' -f2)"
+            
+            if duration="$(($saved_duration + $duration))"
+            then
+                sed -i "s@$game_name|$saved_duration@$game_name|$duration@g" \
+                        "$game_stats_file"
+            fi
+        else
+            echo "$game_name|$duration" >> "$game_stats_file"
+        fi
+    fi
+    
+}
+
+
+# Measure time
+function measure_exec()
+{
+    local file args exec_duration
+
+    file="$1"
+    shift
+    args="$@"
+    
+    SECONDS=0
+
+    "$file" "$args"
+    
+    exec_duration="$SECONDS"
+    
+    if [ "$game_stats" = "on" ]
+    then
+        save_time "$exec_duration"
+    fi
+}
+
 function launch_game_exec()
 {
     file="$(echo "${sorted_games[$game_id]}" | cut -d'|' -f3)"
     args="$(echo "${sorted_games[$game_id]}" | cut -d'|' -f4)"
-    exec "$file" $args
+
+    
+    measure_exec "$file" $args
 }
 
 function launch_game_steam()
 {
     appid="$(echo "${sorted_games[$game_id]}" | cut -d'|' -f3)"
-    exec steam -silent "steam://rungameid/$appid"
+    
+    measure_exec steam -silent "steam://rungameid/$appid"
 }
 
 function launch_game()

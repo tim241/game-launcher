@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/game-launcher"
+game_stats_file="$config_dir/game-stats.conf"
+
+function print_stats()
+{
+    while read -r line
+    do
+        game_name="$(echo "$line" | cut -d'|' -f1)"
+        game_time="$(echo "$line" | cut -d'|' -f2)"
+
+        game_time_seconds="$game_time"
+        game_time_minutes="0"
+        game_time_hours="0"
+
+        if [ ! "$game_name" ] || \
+            [ ! "$game_time" ]
+        then
+            continue
+        fi
+
+
+        # calculate minutes
+        while (($game_time_seconds >= 60))
+        do
+            game_time_seconds="$(($game_time_seconds - 60))"
+
+            ((game_time_minutes++))    
+        done
+
+        # calculate hours
+        while (($game_time_minutes >= 60))
+        do
+            game_time_minutes="$(($game_time_minutes - 60))"
+
+            ((game_time_hours++))
+        done
+        
+
+        echo "name: $game_name"
+        echo "hours: $game_time_hours"
+        echo "minutes: $game_time_minutes"
+        echo "seconds: $game_time_seconds"
+    done < "$game_stats_file"
+}
+
+if [ ! -f "$game_stats_file" ]
+then
+    exit 1
+fi
+
+print_stats
+
