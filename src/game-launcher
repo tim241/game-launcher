@@ -206,7 +206,7 @@ function measure_exec()
     
     SECONDS=0
 
-    "$file" "$args"
+    "$file" $args
     
     exec_duration="$SECONDS"
     
