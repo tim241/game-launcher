@@ -7,8 +7,12 @@ custom_games_file="$config_dir/custom-games.conf"
 game_stats_file="$config_dir/game-stats.conf"
 
 # default settings
+scan_gog="yes"
 gog_games_path="$HOME/GOG Games/"
+
+scan_steam="yes"
 steamapps_path="$HOME/.local/share/Steam/steamapps"
+
 game_stats="on"
 
 # game array format:
@@ -31,8 +35,16 @@ function source_config()
 
 function get_games()
 {
-    get_gog_games
-    get_steam_games
+    if [ "$scan_gog" = "yes" ]
+    then
+        get_gog_games
+    fi
+
+    if [ "$scan_steam" = "yes" ]
+    then
+        get_steam_games
+    fi
+
     get_custom_games
 
     if [ ! "${games[0]}" ]
