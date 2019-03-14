@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+echo "<openbox_pipe_menu>"
+
+while read -r game
+do
+	echo "    <item label=\"$game\">"
+	echo "      <action name=\"Execute\">"
+	echo "        <command>game-launcher --launch \"$game\"</command>"
+	echo "      </action>"
+	echo "    </item>"
+
+done < <(game-launcher --list 2> /dev/null)
+
+echo "</openbox_pipe_menu>"

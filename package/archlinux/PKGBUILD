@@ -12,7 +12,8 @@ sha256sums=('SKIP')
 package()
 {
     cd "$_pkgname"
-    install -D -m=755 src/game-launcher       "$pkgdir/usr/bin/game-launcher"
-    install -D -m=755 src/game-launcher-add   "$pkgdir/usr/bin/game-launcher-add"
-    install -D -m=755 src/game-launcher-stats "$pkgdir/usr/bin/game-launcher-stats"
+    install -D -m=755 src/game-launcher        "$pkgdir/usr/bin/game-launcher"
+    install -D -m=755 src/game-launcher-add    "$pkgdir/usr/bin/game-launcher-add"
+    install -D -m=755 src/game-launcher-stats  "$pkgdir/usr/bin/game-launcher-stats"
+    install -D -m=755 src/game-launcher-obmenu "$pkgdir/usr/bin/game-launcher-obmenu"
 }

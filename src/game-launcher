@@ -53,6 +53,59 @@ function get_games()
     fi
 }
 
+function list_games()
+{
+    if ! get_games
+    then
+        echo "No games found.."
+        exit 1
+    fi
+    
+    sort_games
+    
+    for game in "${sorted_games[@]}"
+    do
+        echo "$game" | cut -d'|' -f2
+    done
+}
+
+function launch_game_cli()
+{
+    local launch_game_name game_name game_id found_game
+    
+    launch_game_name="$@"
+
+    if ! get_games
+    then
+        echo "No games found.."
+        exit 1
+    fi
+
+    sort_games
+
+    found_game=false
+    game_id=0
+
+    for game in "${sorted_games[@]}"
+    do
+        game_name="$(echo "$game" | cut -d'|' -f2)"
+
+        if [ "$game_name" = "$launch_game_name" ]
+        then
+            found_game=true
+            echo "Launching '$game_name'"
+            launch_game
+        fi
+
+        ((game_id++))
+    done
+
+    if [ "$found_game" = "false" ]
+    then
+        echo "Game not found.."
+    fi
+}
+
 function get_gog_games()
 {
     if [ ! -d "$gog_games_path" ]
@@ -255,6 +308,22 @@ function launch_game()
 }
 
 source_config
+
+# parse arguments
+for arg in $@
+do
+    case $arg in
+        --list) 
+            list_games
+            exit;;
+        --launch) 
+            shift
+            launch_game_cli "$@"
+            exit;;
+
+        *) break;;
+    esac
+done
 
 if ! get_games
 then
