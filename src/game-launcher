@@ -8,10 +8,10 @@ game_stats_file="$config_dir/game-stats.conf"
 
 # default settings
 scan_gog="yes"
-gog_games_path="$HOME/GOG Games/"
+gog_games_path=("$HOME/GOG Games/")
 
 scan_steam="yes"
-steamapps_path="$HOME/.local/share/Steam/steamapps"
+steamapps_path=("$HOME/.local/share/Steam/steamapps")
 
 game_stats="on"
 
@@ -113,23 +113,21 @@ function launch_game_cli()
 
 function get_gog_games()
 {
-    if [ ! -d "$gog_games_path" ]
-    then
-        return
-    fi
-
     local game_name
 
     # get games
-    for game in "$gog_games_path"/*
+    for gog_path in "${gog_games_path[@]}"
     do
-        # found the game
-        if [ -f "$game/start.sh" ] && \
-            [ -f "$game/gameinfo" ]
-        then
-            game_name="$(head -1 "$game/gameinfo")"
-            games+=("exec|$game_name|$game/start.sh")
-        fi
+        for game in "$gog_path"/*
+        do
+            # found the game
+            if [ -f "$game/start.sh" ] && \
+                [ -f "$game/gameinfo" ]
+            then
+                game_name="$(head -1 "$game/gameinfo")"
+                games+=("exec|$game_name|$game/start.sh")
+            fi
+        done
     done
 
 }
@@ -154,20 +152,28 @@ function get_steam_games()
         return
     fi
 
-    # get all appmanifest files
-    for appmanifest in "$steamapps_path"/appmanifest_*
+    for steam_path in "${steamapps_path[@]}"
     do
-        game_name="$(steam_appmanifest_get "$appmanifest" "\"name\"")"
-        game_appid="$(steam_appmanifest_get "$appmanifest" "\"appid\"")"
+        # get all appmanifest files
+        for appmanifest in "$steam_path"/appmanifest_*
+        do
+            if [ ! -f "$appmanifest" ]
+            then
+                continue
+            fi
 
-        if [ ! "$game_name" ] || \
-            [ ! "$game_appid" ]
-        then
-            continue
-        fi
+            game_name="$(steam_appmanifest_get "$appmanifest" "\"name\"")"
+            game_appid="$(steam_appmanifest_get "$appmanifest" "\"appid\"")"
 
-        # add game to list
-        games+=("steam|$game_name|$game_appid")
+            if [ ! "$game_name" ] || \
+                [ ! "$game_appid" ]
+            then
+                continue
+            fi
+
+            # add game to list
+            games+=("steam|$game_name|$game_appid")
+        done
     done
 }
 

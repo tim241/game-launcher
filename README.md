@@ -1,5 +1,5 @@
-# Rofi Game Launcher
-This is a simple game launcher for rofi
+# Game Launcher
+This is a simple game launcher
 
 # Supported games
 * GOG games
