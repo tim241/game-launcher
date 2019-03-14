@@ -25,6 +25,11 @@ games=()
 # sorted game list
 sorted_games=()
 
+function error()
+{
+    >&2 echo "$@"
+}
+
 function source_config()
 {
     if [ -f "$config_file" ]
@@ -57,7 +62,7 @@ function list_games()
 {
     if ! get_games
     then
-        echo "No games found.."
+        error "No games found.."
         exit 1
     fi
     
@@ -77,7 +82,7 @@ function launch_game_cli()
 
     if ! get_games
     then
-        echo "No games found.."
+        error "No games found.."
         exit 1
     fi
 
@@ -102,7 +107,7 @@ function launch_game_cli()
 
     if [ "$found_game" = "false" ]
     then
-        echo "Game not found.."
+        error "Game not found.."
     fi
 }
 
@@ -327,7 +332,7 @@ done
 
 if ! get_games
 then
-    echo "Failed to get games"
+    error "Failed to get games"
     exit 1
 fi
 
@@ -337,7 +342,7 @@ show_menu
 
 if [ ! "$game_id" ]
 then
-    echo "Failed to get game id"
+    error "Failed to get game id"
     exit 1
 fi
 
